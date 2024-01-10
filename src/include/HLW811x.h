@@ -274,12 +274,15 @@ typedef struct HLW811x_Handler_s
 
 /**
  ==================================================================================
-                               ##### Functions #####                               
+                        ##### Initialization Functions #####                       
  ==================================================================================
  */
 
 /**
  * @brief  Initializer function
+ * @note   This function must be called after initializing platform dependent
+ *         layer and before using other functions.
+ * @note   This function will reset the device.
  * @param  Handler: Pointer to handler
  * @param  Device: Device type
  * @retval HLW811x_Result_t
@@ -300,6 +303,47 @@ HLW811x_Init(HLW811x_Handler_t *Handler, HLW811x_Device_t Device);
  */
 HLW811x_Result_t
 HLW811x_DeInit(HLW811x_Handler_t *Handler);
+
+
+
+/**
+ ==================================================================================
+                          ##### Low Level Functions #####                          
+ ==================================================================================
+ */
+
+/**
+ * @brief  Low level read register function
+ * @param  Handler: Pointer to handler
+ * @param  RegAddr: Register address
+ * @param  Data: Pointer to buffer to store data
+ * @param  Len: Register data length in bytes
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ *         - HLW811X_FAIL: Failed to send or receive data.
+ */
+HLW811x_Result_t
+HLW811x_ReadRegLL(HLW811x_Handler_t *Handler,
+                  uint8_t RegAddr,
+                  uint8_t *Data,
+                  uint8_t Len);
+
+
+/**
+ * @brief  Low level write register function
+ * @param  Handler: Pointer to handler
+ * @param  RegAddr: Register address
+ * @param  Data: Pointer to data to write
+ * @param  Len: Register data length in bytes
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ *         - HLW811X_FAIL: Failed to send or receive data.
+ */
+HLW811x_Result_t
+HLW811x_WriteRegLL(HLW811x_Handler_t *Handler,
+                   uint8_t RegAddr,
+                   uint8_t *Data,
+                   uint8_t Len);
 
 
 

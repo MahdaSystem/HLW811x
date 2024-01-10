@@ -341,3 +341,65 @@ HLW811x_DeInit(HLW811x_Handler_t *Handler)
 
   return HLW811X_OK;
 }
+
+
+/**
+ * @brief  Low level read register function
+ * @param  Handler: Pointer to handler
+ * @param  RegAddr: Register address
+ * @param  Data: Pointer to buffer to store data
+ * @param  Len: Register data length in bytes
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ *         - HLW811X_FAIL: Failed to send or receive data.
+ */
+HLW811x_Result_t
+HLW811x_ReadRegLL(HLW811x_Handler_t *Handler,
+                  uint8_t RegAddr,
+                  uint8_t *Data,
+                  uint8_t Len)
+{
+  if (!Handler || !Data)
+    return HLW811X_INVALID_PARAM;
+
+  if (Len == 0)
+    return HLW811X_INVALID_PARAM;
+
+  return ((HLW811x_ReadReg(Handler, RegAddr, Len, Data) >= 0) ? HLW811X_OK : HLW811X_FAIL);
+}
+
+
+/**
+ * @brief  Low level write register function
+ * @param  Handler: Pointer to handler
+ * @param  RegAddr: Register address
+ * @param  Data: Pointer to data to write
+ * @param  Len: Register data length in bytes
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ *         - HLW811X_FAIL: Failed to send or receive data.
+ */
+HLW811x_Result_t
+HLW811x_WriteRegLL(HLW811x_Handler_t *Handler,
+                   uint8_t RegAddr,
+                   uint8_t *Data,
+                   uint8_t Len)
+{
+  int8_t Result = 0;
+
+  if (!Handler || !Data)
+    return HLW811X_INVALID_PARAM;
+
+  if (Len == 0)
+    return HLW811X_INVALID_PARAM;
+
+  Result = HLW811x_CommandEnableWriteOperation(Handler);
+  if (Result < 0)
+    return HLW811X_FAIL;
+
+  Result = HLW811x_WriteReg(Handler, RegAddr, Len, Data);
+  if (Result < 0)
+    return HLW811X_FAIL;
+  
+  return HLW811x_CommandCloseWriteOperation(Handler);
+}
