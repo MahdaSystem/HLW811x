@@ -401,5 +401,9 @@ HLW811x_WriteRegLL(HLW811x_Handler_t *Handler,
   if (Result < 0)
     return HLW811X_FAIL;
   
-  return HLW811x_CommandCloseWriteOperation(Handler);
+  Result = HLW811x_CommandCloseWriteOperation(Handler);
+  if (Result < 0)
+    return HLW811X_FAIL;
+
+  return HLW811X_OK;
 }
