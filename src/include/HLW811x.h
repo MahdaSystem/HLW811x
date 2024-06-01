@@ -984,6 +984,21 @@ HLW811x_Result_t
 HLW811x_GetPowerFactor(HLW811x_Handler_t *Handler, float *Data);
 
 
+/**
+ * @brief  Get phase angle in degrees
+ * @param  Handler: Pointer to handler
+ * @param  Data: Pointer to store the data
+ * @param  Freq: Frequency of the voltage channel in Hz
+ * @note   The phase angle should be 50 or 60 Hz. The other values are invalid
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ *         - HLW811X_FAIL: Failed to send or receive data.
+ *         - HLW811X_INVALID_PARAM: One of parameters is invalid.
+ */
+HLW811x_Result_t
+HLW811x_GetPhaseAngle(HLW811x_Handler_t *Handler, float *Data, uint32_t Freq);
+
+
 
 #ifdef __cplusplus
 }
