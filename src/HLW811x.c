@@ -337,21 +337,21 @@ HLW811x_CommandReset(HLW811x_Handler_t *Handler)
   return HLW811x_Command(Handler, HLW811X_COMMAND_RESET);
 }
 
-// static int32_t
-// HLW811x_24BitTo32Bit(uint8_t *Data)
-// {
-//   int32_t Res = 0;
+static int32_t
+HLW811x_24BitTo32Bit(uint32_t Data)
+{
+  int32_t Res = 0;
 
-//   // convert three bytes of 2s complement into 24 bit signed integer
-//   if (Data[0] & 0x80)
-//     Res = 0xFF;
-//   Res = (Res << 8) | Data[0];
-//   Res = (Res << 8) | Data[1];
-//   Res = (Res << 8) | Data[2];
+  Data &= 0x00FFFFFF;
 
-//   // Res is now a 32-bit signed integer
-//   return Res;
-// }
+  // convert three bytes of 2s complement into 24 bit signed integer
+  if (Data & 0x00800000)
+    Res = 0xFF000000;
+  Res |= Data;
+
+  // Res is now a 32-bit signed integer
+  return Res;
+}
 
 
 
@@ -1959,6 +1959,33 @@ HLW811x_GetFreqU(HLW811x_Handler_t *Handler, float *Data)
     return HLW811X_FAIL;
 
   *Data = Handler->CLKI / 8.0 / RawValue;
+
+  return HLW811X_OK;
+}
+
+
+/**
+ * @brief  Get the power factor of the selected channel
+ * @note   The power factor is a value between -1 and 1
+ * @param  Handler: Pointer to handler
+ * @param  Data: Pointer to store the data
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ *         - HLW811X_FAIL: Failed to send or receive data.
+ */
+HLW811x_Result_t
+HLW811x_GetPowerFactor(HLW811x_Handler_t *Handler, float *Data)
+{
+  int8_t Result = 0;
+  uint32_t RawValue = 0;
+  int32_t RawValueInt = 0;
+
+  Result = HLW811x_ReadReg24(Handler, HLW811X_REG_ADDR_PowerFactor, &RawValue);
+  if (Result < 0)
+    return HLW811X_FAIL;
+
+  RawValueInt = HLW811x_24BitTo32Bit(RawValue);
+  *Data = (float)((double)RawValueInt / 8388607.0);
 
   return HLW811X_OK;
 }

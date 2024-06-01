@@ -958,6 +958,7 @@ HLW811x_GetEnergyA(HLW811x_Handler_t *Handler, float *Data);
 HLW811x_Result_t
 HLW811x_GetEnergyB(HLW811x_Handler_t *Handler, float *Data);
 
+
 /**
  * @brief  Get the frequency of the voltage channel in Hz
  * @param  Handler: Pointer to handler
@@ -968,6 +969,19 @@ HLW811x_GetEnergyB(HLW811x_Handler_t *Handler, float *Data);
  */
 HLW811x_Result_t
 HLW811x_GetFreqU(HLW811x_Handler_t *Handler, float *Data);
+
+
+/**
+ * @brief  Get the power factor of the selected channel
+ * @note   The power factor is a value between -1 and 1
+ * @param  Handler: Pointer to handler
+ * @param  Data: Pointer to store the data
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ *         - HLW811X_FAIL: Failed to send or receive data.
+ */
+HLW811x_Result_t
+HLW811x_GetPowerFactor(HLW811x_Handler_t *Handler, float *Data);
 
 
 
