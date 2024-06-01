@@ -137,7 +137,7 @@ extern "C" {
 #define HLW811X_REG_EMUCON_PARUN          0
 
 /**
- * @brief  Register bits of HFConst register
+ * @brief  Register bits of EMUCON2 register
  */
 #define HLW811X_REG_EMUCON2_SDOCmos       12
 #define HLW811X_REG_EMUCON2_EPB_CB        11
