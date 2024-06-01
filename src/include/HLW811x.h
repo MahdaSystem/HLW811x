@@ -78,6 +78,15 @@ typedef enum HLW811x_Device_e
 
 
 /**
+ * @brief  Channel type
+ */
+typedef enum HLW811x_CurrentChannel_e
+{
+  HLW811X_CURRENT_CHANNEL_A = 0,
+  HLW811X_CURRENT_CHANNEL_B = 1
+} HLW811x_CurrentChannel_t;
+
+/**
  * @brief  PGA gain
  */
 typedef enum HLW811x_PGA_e
@@ -334,6 +343,7 @@ typedef struct HLW811x_Handler_s
   
   uint16_t HFconst;
   uint32_t CLKI;
+  HLW811x_CurrentChannel_t CurrentChannel;
 
   // Platform dependent layer
   HLW811x_Platform_t Platform;
@@ -550,6 +560,24 @@ HLW811x_SetResRatioU(HLW811x_Handler_t *Handler, float KU);
  */
 HLW811x_Result_t
 HLW811x_SetCLKFreq(HLW811x_Handler_t *Handler, uint32_t Freq);
+
+
+/**
+ * @brief  Set current channel for special measurements
+ * @note   The selected channel will be used for special measurements such as
+ *         apparent power, power factor, phase angle, instantaneous
+ *         apparent power and active power overload
+ * 
+ * @param  Handler: Pointer to handler
+ * @param  Channel: Current channel
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ *         - HLW811X_FAIL: Failed to send or receive data.
+ *         - HLW811X_INVALID_PARAM: One of parameters is invalid.
+ */
+HLW811x_Result_t
+HLW811x_SetSpecialMeasurementChannel(HLW811x_Handler_t *Handler,
+                                     HLW811x_CurrentChannel_t Channel);
 
 
 /**

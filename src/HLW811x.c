@@ -37,7 +37,7 @@
 /**
  * @brief  Commands
  */
-#define HLW811X_COMMAND_ADDRESS       0xEA
+#define HLW811X_COMMAND_ADDRESS       HLW811X_REG_ADDR_Command
 #define HLW811X_COMMAND_WRITE_ENABLE  0xE5
 #define HLW811X_COMMAND_WRITE_CLOSE   0xDC
 #define HLW811X_COMMAND_CHANNELA      0x5A
@@ -70,7 +70,7 @@ HLW811x_WriteRegSPI(HLW811x_Handler_t *Handler,
   uint8_t Buffer[5] = {0};
   int8_t Result = 0;
 
-  if (Address == 0xEA) // Special address for commands
+  if (Address == HLW811X_COMMAND_ADDRESS) // Special address for commands
     Buffer[0] = Address;
   else
     Buffer[0] = Address | 0x80;
@@ -95,7 +95,7 @@ HLW811x_ReadRegSPI(HLW811x_Handler_t *Handler,
   uint8_t BufferRx[5] = {0};
   int8_t Result = 0;
 
-  if (Address == 0xEA) // Special address for commands
+  if (Address == HLW811X_COMMAND_ADDRESS) // Special address for commands
     return -1;
   else
     BufferTx[0] = Address & 0x7F;
@@ -126,7 +126,7 @@ HLW811x_WriteRegUART(HLW811x_Handler_t *Handler,
   Buffer[0] = 0xA5;
   Checksum += Buffer[0];
 
-  if (Address == 0xEA) // Special address for commands
+  if (Address == HLW811X_COMMAND_ADDRESS) // Special address for commands
     Buffer[1] = Address;
   else
     Buffer[1] = Address | 0x80;
@@ -159,7 +159,7 @@ HLW811x_ReadRegUART(HLW811x_Handler_t *Handler,
   Buffer[0] = 0xA5;
   Checksum += Buffer[0];
 
-  if (Address == 0xEA) // Special address for commands
+  if (Address == HLW811X_COMMAND_ADDRESS) // Special address for commands
     return -1;
   else
     Buffer[1] = Address & 0x7F;
@@ -332,14 +332,6 @@ HLW811x_CommandCloseWriteOperation(HLW811x_Handler_t *Handler)
 }
 
 static inline int8_t
-HLW811x_CommandChannel(HLW811x_Handler_t *Handler, uint8_t Channel)
-{
-  if (Channel == 0)
-    return HLW811x_Command(Handler, HLW811X_COMMAND_CHANNELA);
-  return HLW811x_Command(Handler, HLW811X_COMMAND_CHANNELB);
-}
-
-static inline int8_t
 HLW811x_CommandReset(HLW811x_Handler_t *Handler)
 {
   return HLW811x_Command(Handler, HLW811X_COMMAND_RESET);
@@ -433,8 +425,11 @@ HLW811x_Init(HLW811x_Handler_t *Handler, HLW811x_Device_t Device)
 
   if (HLW811x_CommandReset(Handler) < 0)
     return HLW811X_FAIL;
-
   Handler->Platform.DelayMs(10);
+
+  Handler->CurrentChannel = HLW811X_CURRENT_CHANNEL_A;
+  if (HLW811x_Command(Handler, Handler->CurrentChannel) < 0)
+    return HLW811X_FAIL;
 
   return HLW811X_OK;
 }
@@ -664,6 +659,40 @@ HLW811x_SetCLKFreq(HLW811x_Handler_t *Handler, uint32_t Freq)
 {
   Handler->CLKI = Freq;
   return HLW811X_OK;
+}
+
+
+/**
+ * @brief  Set current channel for special measurements
+ * @note   The selected channel will be used for special measurements such as
+ *         apparent power, power factor, phase angle, instantaneous
+ *         apparent power and active power overload
+ * 
+ * @param  Handler: Pointer to handler
+ * @param  Channel: Current channel
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ *         - HLW811X_FAIL: Failed to send or receive data.
+ *         - HLW811X_INVALID_PARAM: One of parameters is invalid.
+ */
+HLW811x_Result_t
+HLW811x_SetSpecialMeasurementChannel(HLW811x_Handler_t *Handler,
+                                     HLW811x_CurrentChannel_t Channel)
+{
+  switch (Channel)
+  {
+  case HLW811X_CURRENT_CHANNEL_A:
+    Handler->CurrentChannel = HLW811X_COMMAND_CHANNELA;
+    return HLW811x_Command(Handler, HLW811X_COMMAND_CHANNELA);
+    break;
+
+  case HLW811X_CURRENT_CHANNEL_B:
+    Handler->CurrentChannel = HLW811X_COMMAND_CHANNELB;
+    return HLW811x_Command(Handler, HLW811X_COMMAND_CHANNELB);
+    break;
+  }
+
+  return HLW811X_INVALID_PARAM;
 }
 
 
@@ -1828,10 +1857,18 @@ HLW811x_GetPowerS(HLW811x_Handler_t *Handler, float *Data)
   if (Result < 0)
     return HLW811X_FAIL;
 
-  // TODO: Check the selected channel
   CoefReg = Handler->CoefReg.PowerSC;
-  PGA = 16 >> (Handler->PGA.U + Handler->PGA.IA);
-  ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIA;
+  if (Handler->CurrentChannel == HLW811X_CURRENT_CHANNEL_A)
+  {
+    PGA = 16 >> (Handler->PGA.U + Handler->PGA.IA);
+    ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIA;
+  }
+  else if (Handler->CurrentChannel == HLW811X_CURRENT_CHANNEL_B)
+  {
+    PGA = 16 >> (Handler->PGA.U + Handler->PGA.IB);
+    // ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIB;
+    ResCoef = Handler->ResCoef.KU * 1;
+  }
   DoubleBuffer = (double)RawValue * (CoefReg / 2147483648.0 / ResCoef * PGA);
   *Data = (float)DoubleBuffer;
 
@@ -1895,7 +1932,8 @@ HLW811x_GetEnergyB(HLW811x_Handler_t *Handler, float *Data)
   // TODO: Fix resistor ratio
   CoefReg = Handler->CoefReg.EnergyBC;
   PGA = (1 << Handler->PGA.U) * (1 << Handler->PGA.IB);
-  ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIA;
+  // ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIA;
+  ResCoef = Handler->ResCoef.KU;
   *Data = (float)RawValue * (CoefReg / (double)536870912.0f / PGA / 4096 * Handler->HFconst);
 
   return HLW811X_OK;
