@@ -61,6 +61,13 @@ static const uint16_t BaudRateTable[] =
  ==================================================================================
  */
 
+static int8_t
+HLW811x_Platform_DelayMs(uint8_t Delay)
+{
+  vTaskDelay(Delay / portTICK_PERIOD_MS);
+  return 0;
+}
+
 #if (HLW811X_CONFIG_SUPPORT_SPI)
 static int8_t
 HLW811x_Platform_SPI_Init(void)
@@ -268,6 +275,7 @@ HLW811x_Platform_Init_SPI(HLW811x_Handler_t *Handler)
 {
   HLW811X_PLATFORM_LINK_INIT(Handler, HLW811x_Platform_SPI_Init);
   HLW811X_PLATFORM_LINK_DEINIT(Handler, HLW811x_Platform_SPI_DeInit);
+  HLW811X_PLATFORM_LINK_DELAYMS(Handler, HLW811x_Platform_DelayMs);
   HLW811X_PLATFORM_LINK_SPI_SENDRECEIVE(Handler, HLW811x_Platform_SPI_SendReceive);
   HLW811X_PLATFORM_LINK_SPI_SETLEVELSCSN(Handler, HLW811x_Platform_SPI_SetLevelSCSN);
   HLW811X_PLATFORM_SET_COMMUNICATION(Handler, HLW811X_COMMUNICATION_SPI);
@@ -285,6 +293,7 @@ HLW811x_Platform_Init_UART(HLW811x_Handler_t *Handler)
 {
   HLW811X_PLATFORM_LINK_INIT(Handler, HLW811x_Platform_UART_Init);
   HLW811X_PLATFORM_LINK_DEINIT(Handler, HLW811x_Platform_UART_DeInit);
+  HLW811X_PLATFORM_LINK_DELAYMS(Handler, HLW811x_Platform_DelayMs);
   HLW811X_PLATFORM_LINK_UART_SEND(Handler, HLW811x_Platform_UART_Send);
   HLW811X_PLATFORM_LINK_UART_RECEIVE(Handler, HLW811x_Platform_UART_Receive);
   HLW811X_PLATFORM_SET_COMMUNICATION(Handler, HLW811X_COMMUNICATION_UART);
