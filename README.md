@@ -8,4 +8,4 @@ It is easy to port this library to any platform. But now it is ready for use in:
 
 
 ## ATTENTION
-This library is under development. It is not ready for use in production.
+This library is under development. Use it at your own risk.
