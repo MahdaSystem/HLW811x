@@ -331,6 +331,7 @@ typedef struct HLW811x_Handler_s
   {
     float KU;
     float KIA;
+    float KIB;
   } ResCoef;
 
   struct
@@ -537,6 +538,18 @@ HLW811x_Begin(HLW811x_Handler_t *Handler);
  */
 HLW811x_Result_t
 HLW811x_SetResRatioIA(HLW811x_Handler_t *Handler, float KIA);
+
+
+/**
+ * @brief  Set the ratio of the resistors for current channel B
+ * @note   This ration mentioned in the datasheet as K1
+ * @param  Handler: Pointer to handler
+ * @param  KIA: Ratio of the resistors for current channel B
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ */
+HLW811x_Result_t
+HLW811x_SetResRatioIB(HLW811x_Handler_t *Handler, float KIB);
 
 
 /**

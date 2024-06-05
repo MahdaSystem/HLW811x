@@ -425,11 +425,7 @@ HLW811x_Init(HLW811x_Handler_t *Handler, HLW811x_Device_t Device)
 
   if (HLW811x_CommandReset(Handler) < 0)
     return HLW811X_FAIL;
-  Handler->Platform.DelayMs(10);
-
-  Handler->CurrentChannel = HLW811X_CURRENT_CHANNEL_A;
-  if (HLW811x_Command(Handler, Handler->CurrentChannel) < 0)
-    return HLW811X_FAIL;
+  Handler->Platform.DelayMs(100);
 
   return HLW811X_OK;
 }
@@ -544,12 +540,17 @@ HLW811x_Begin(HLW811x_Handler_t *Handler)
 
   Handler->ResCoef.KU = 1.0f;
   Handler->ResCoef.KIA = 1.0f;
+  Handler->ResCoef.KIB = 1.0f;
 
   Handler->PGA.U = HLW811X_PGA_1;
   Handler->PGA.IA = HLW811X_PGA_16;
   Handler->PGA.IB = HLW811X_PGA_1;
 
   Handler->CLKI = 3579545;
+
+  if (HLW811x_SetSpecialMeasurementChannel(Handler,
+                                           HLW811X_CURRENT_CHANNEL_A) != HLW811X_OK)
+    return HLW811X_FAIL;
 
   Result = HLW811x_ReadReg16(Handler, HLW811X_REG_ADDR_HFConst, &Reg16);
   if (Result < 0)
@@ -632,6 +633,22 @@ HLW811x_SetResRatioIA(HLW811x_Handler_t *Handler, float KIA)
 
 
 /**
+ * @brief  Set the ratio of the resistors for current channel B
+ * @note   This ration mentioned in the datasheet as K1
+ * @param  Handler: Pointer to handler
+ * @param  KIA: Ratio of the resistors for current channel B
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ */
+HLW811x_Result_t
+HLW811x_SetResRatioIB(HLW811x_Handler_t *Handler, float KIB)
+{
+  Handler->ResCoef.KIB = KIB;
+  return HLW811X_OK;
+}
+
+
+/**
  * @brief  Set the ratio of the resistors for voltage channel
  * @note   This ration mentioned in the datasheet as K2
  * @param  Handler: Pointer to handler
@@ -682,12 +699,12 @@ HLW811x_SetSpecialMeasurementChannel(HLW811x_Handler_t *Handler,
   switch (Channel)
   {
   case HLW811X_CURRENT_CHANNEL_A:
-    Handler->CurrentChannel = HLW811X_COMMAND_CHANNELA;
+    Handler->CurrentChannel = HLW811X_CURRENT_CHANNEL_A;
     return HLW811x_Command(Handler, HLW811X_COMMAND_CHANNELA);
     break;
 
   case HLW811X_CURRENT_CHANNEL_B:
-    Handler->CurrentChannel = HLW811X_COMMAND_CHANNELB;
+    Handler->CurrentChannel = HLW811X_CURRENT_CHANNEL_B;
     return HLW811x_Command(Handler, HLW811X_COMMAND_CHANNELB);
     break;
   }
@@ -1691,15 +1708,17 @@ HLW811x_Result_t
 HLW811x_GetRmsU(HLW811x_Handler_t *Handler, float *Data)
 {
   int8_t Result = 0;
-  uint32_t RawValue = 0;
+  uint32_t Reg = 0;
+  int32_t RawValue = 0;
   uint16_t CoefReg = 0;
   float ResCoef = 0;
   uint8_t PGA = 0;
 
-  Result = HLW811x_ReadReg24(Handler, HLW811X_REG_ADDR_RmsU, &RawValue);
+  Result = HLW811x_ReadReg24(Handler, HLW811X_REG_ADDR_RmsU, &Reg);
   if (Result < 0)
     return HLW811X_FAIL;
 
+  RawValue = HLW811x_24BitTo32Bit(Reg);
   CoefReg = Handler->CoefReg.RmsUC;
   ResCoef = Handler->ResCoef.KU;
   PGA = (1 << Handler->PGA.U);
@@ -1721,16 +1740,18 @@ HLW811x_Result_t
 HLW811x_GetRmsIA(HLW811x_Handler_t *Handler, float *Data)
 {
   int8_t Result = 0;
-  uint32_t RawValue = 0;
+  uint32_t Reg = 0;
+  int32_t RawValue = 0;
   uint16_t CoefReg = 0;
   float ResCoef = 0;
   uint8_t PGA = 0;
   double DoubleBuffer = 0;
 
-  Result = HLW811x_ReadReg24(Handler, HLW811X_REG_ADDR_RmsIA, &RawValue);
+  Result = HLW811x_ReadReg24(Handler, HLW811X_REG_ADDR_RmsIA, &Reg);
   if (Result < 0)
     return HLW811X_FAIL;
 
+  RawValue = HLW811x_24BitTo32Bit(Reg);
   CoefReg = Handler->CoefReg.RmsIAC;
   ResCoef = Handler->ResCoef.KIA;
   PGA = 16 >> Handler->PGA.IA;
@@ -1753,18 +1774,22 @@ HLW811x_Result_t
 HLW811x_GetRmsIB(HLW811x_Handler_t *Handler, float *Data)
 {
   int8_t Result = 0;
-  uint32_t RawValue = 0;
+  uint32_t Reg = 0;
+  int32_t RawValue = 0;
   uint16_t CoefReg = 0;
+  float ResCoef = 0;
   uint8_t PGA = 0;
   double DoubleBuffer = 0;
 
-  Result = HLW811x_ReadReg24(Handler, HLW811X_REG_ADDR_RmsIB, &RawValue);
+  Result = HLW811x_ReadReg24(Handler, HLW811X_REG_ADDR_RmsIB, &Reg);
   if (Result < 0)
     return HLW811X_FAIL;
 
+  RawValue = HLW811x_24BitTo32Bit(Reg);
   CoefReg = Handler->CoefReg.RmsIBC;
+  ResCoef = Handler->ResCoef.KIB;
   PGA = 16 >> Handler->PGA.IB;
-  DoubleBuffer = (double)RawValue * (CoefReg / 8388608.0 / 1000 * PGA);
+  DoubleBuffer = (double)RawValue * (CoefReg / 8388608.0 / ResCoef / 10000 * PGA);
   *Data = (float)DoubleBuffer;
 
   return HLW811X_OK;
@@ -1783,16 +1808,18 @@ HLW811x_Result_t
 HLW811x_GetPowerPA(HLW811x_Handler_t *Handler, float *Data)
 {
   int8_t Result = 0;
-  uint32_t RawValue = 0; // TODO: Check data type (I32 or U32)
+  uint32_t Reg = 0;
+  int32_t RawValue = 0;
   uint16_t CoefReg = 0;
   double ResCoef = 0;
   double PGA = 0;
   double DoubleBuffer = 0;
 
-  Result = HLW811x_ReadReg32(Handler, HLW811X_REG_ADDR_PowerPA, &RawValue);
+  Result = HLW811x_ReadReg32(Handler, HLW811X_REG_ADDR_PowerPA, &Reg);
   if (Result < 0)
     return HLW811X_FAIL;
 
+  RawValue = *((int32_t*)&Reg);
   CoefReg = Handler->CoefReg.PowerPAC;
   PGA = 16 >> (Handler->PGA.U + Handler->PGA.IA);
   ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIA;
@@ -1815,19 +1842,21 @@ HLW811x_Result_t
 HLW811x_GetPowerPB(HLW811x_Handler_t *Handler, float *Data)
 {
   int8_t Result = 0;
-  uint32_t RawValue = 0;
+  uint32_t Reg = 0;
+  int32_t RawValue = 0;
   uint16_t CoefReg = 0;
   double ResCoef = 0;
-  uint16_t PGA = 0;
+  double PGA = 0;
   double DoubleBuffer = 0;
 
-  Result = HLW811x_ReadReg32(Handler, HLW811X_REG_ADDR_PowerPB, &RawValue);
+  Result = HLW811x_ReadReg32(Handler, HLW811X_REG_ADDR_PowerPB, &Reg);
   if (Result < 0)
     return HLW811X_FAIL;
 
+  RawValue = *((int32_t*)&Reg);
   CoefReg = Handler->CoefReg.PowerPBC;
-  PGA = (1 << Handler->PGA.U) * (1 << Handler->PGA.IB);
-  ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIA;
+  PGA = 16 >> (Handler->PGA.U + Handler->PGA.IB);
+  ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIB;
   DoubleBuffer = (double)RawValue * (CoefReg / 2147483648.0 / ResCoef * PGA);
   *Data = (float)DoubleBuffer;
 
@@ -1847,28 +1876,38 @@ HLW811x_Result_t
 HLW811x_GetPowerS(HLW811x_Handler_t *Handler, float *Data)
 {
   int8_t Result = 0;
-  uint32_t RawValue = 0;
+  uint32_t Reg = 0;
+  int32_t RawValue = 0;
   uint16_t CoefReg = 0;
   double ResCoef = 0;
   double PGA = 0;
   double DoubleBuffer = 0;
 
-  Result = HLW811x_ReadReg32(Handler, HLW811X_REG_ADDR_PowerS, &RawValue);
+  Result = HLW811x_ReadReg32(Handler, HLW811X_REG_ADDR_PowerS, &Reg);
   if (Result < 0)
     return HLW811X_FAIL;
 
+  RawValue = *((int32_t*)&Reg);
   CoefReg = Handler->CoefReg.PowerSC;
-  if (Handler->CurrentChannel == HLW811X_CURRENT_CHANNEL_A)
+
+  switch (Handler->CurrentChannel)
   {
+  
+  case HLW811X_CURRENT_CHANNEL_A:
     PGA = 16 >> (Handler->PGA.U + Handler->PGA.IA);
     ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIA;
-  }
-  else if (Handler->CurrentChannel == HLW811X_CURRENT_CHANNEL_B)
-  {
+    break;
+
+  case HLW811X_CURRENT_CHANNEL_B: 
     PGA = 16 >> (Handler->PGA.U + Handler->PGA.IB);
-    // ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIB;
-    ResCoef = Handler->ResCoef.KU * 1;
+    ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIB;
+    break;
+
+  default:
+    return HLW811X_INVALID_PARAM;
+    break;
   }
+
   DoubleBuffer = (double)RawValue * (CoefReg / 2147483648.0 / ResCoef * PGA);
   *Data = (float)DoubleBuffer;
 
@@ -1924,17 +1963,17 @@ HLW811x_GetEnergyB(HLW811x_Handler_t *Handler, float *Data)
   uint16_t CoefReg = 0;
   float ResCoef = 0;
   uint16_t PGA = 0;
+  double DoubleBuffer = 0;
 
   Result = HLW811x_ReadReg24(Handler, HLW811X_REG_ADDR_Energy_PB, &RawValue);
   if (Result < 0)
     return HLW811X_FAIL;
 
-  // TODO: Fix resistor ratio
   CoefReg = Handler->CoefReg.EnergyBC;
   PGA = (1 << Handler->PGA.U) * (1 << Handler->PGA.IB);
-  // ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIA;
-  ResCoef = Handler->ResCoef.KU;
-  *Data = (float)RawValue * (CoefReg / (double)536870912.0f / PGA / 4096 * Handler->HFconst);
+  ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIB;
+  DoubleBuffer = (double)RawValue * (CoefReg / 536870912.0 / PGA / 4096 / ResCoef) * Handler->HFconst;
+  *Data = (float)DoubleBuffer;
 
   return HLW811X_OK;
 }
