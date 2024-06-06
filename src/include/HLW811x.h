@@ -54,6 +54,14 @@ extern "C" {
   #error "HLW811x: SPI and UART can not be both disabled!"
 #endif
 
+#ifndef HLW811X_CONFIG_SPI_READ_RETRY
+  #define HLW811X_CONFIG_SPI_READ_RETRY  1
+#endif
+
+#ifndef HLW811X_CONFIG_SPI_WRITE_RETRY
+  #define HLW811X_CONFIG_SPI_WRITE_RETRY 1
+#endif
+
 
 /* Exported Data Types ----------------------------------------------------------*/
 /**

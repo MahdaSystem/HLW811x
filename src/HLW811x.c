@@ -67,22 +67,59 @@ static inline int8_t
 HLW811x_WriteRegSPI(HLW811x_Handler_t *Handler,
                     uint8_t Address, uint8_t Size, uint8_t *Data)
 {
-  uint8_t Buffer[5] = {0};
+  uint8_t Buffer[3] = {0};
   int8_t Result = 0;
+
+#if (HLW811X_CONFIG_SPI_WRITE_RETRY > 0)
+  uint8_t Retry = 0;
+  uint8_t BufferCheckTX[3] = {HLW811X_REG_ADDR_Wdata, 0, 0};
+  uint8_t BufferCheckRX[3] = {0};
+#endif
 
   if (Address == HLW811X_COMMAND_ADDRESS) // Special address for commands
     Buffer[0] = Address;
   else
     Buffer[0] = Address | 0x80;
 
-  if (Size > 4)
+  if (Size > 2)
     return -1;
   for (uint8_t i = 0; i < Size; i++)
     Buffer[i + 1] = Data[i];
 
+
+#if (HLW811X_CONFIG_SPI_WRITE_RETRY > 0)
+  do
+  {
+    // Write data
+    Handler->Platform.SPI.SetLevelSCSN(0);
+    Result = Handler->Platform.SPI.SendReceive(Buffer, (uint8_t *)0, Size + 1);
+    Handler->Platform.SPI.SetLevelSCSN(1);
+
+    // Command address is not supposed to be checked
+    if (Address == HLW811X_COMMAND_ADDRESS)
+      break;
+
+    // Read WDATA register to check the written data
+    Handler->Platform.SPI.SetLevelSCSN(0);
+    Result = Handler->Platform.SPI.SendReceive(BufferCheckTX, BufferCheckRX, 3);
+    Handler->Platform.SPI.SetLevelSCSN(1);
+
+    // Compare the written data with the WDATA register
+    Result = 0;
+    for (uint8_t i = 0; i < Size; i++)
+    {
+      if (Data[i] != BufferCheckRX[i + 1])
+      {
+        Result = -1;
+        break;
+      }
+    }
+  } while (Result < 0 && Retry++ < HLW811X_CONFIG_SPI_WRITE_RETRY);
+#else
   Handler->Platform.SPI.SetLevelSCSN(0);
   Result = Handler->Platform.SPI.SendReceive(Buffer, (uint8_t *)0, Size + 1);
   Handler->Platform.SPI.SetLevelSCSN(1);
+#endif
 
   return Result;
 }
@@ -95,6 +132,12 @@ HLW811x_ReadRegSPI(HLW811x_Handler_t *Handler,
   uint8_t BufferRx[5] = {0};
   int8_t Result = 0;
 
+#if (HLW811X_CONFIG_SPI_READ_RETRY > 0)
+  uint8_t Retry = 0;
+  uint8_t BufferCheckTX[5] = {HLW811X_REG_ADDR_Rdata, 0, 0};
+  uint8_t BufferCheckRX[5] = {0};
+#endif
+
   if (Address == HLW811X_COMMAND_ADDRESS) // Special address for commands
     return -1;
   else
@@ -103,9 +146,35 @@ HLW811x_ReadRegSPI(HLW811x_Handler_t *Handler,
   if (Size > 4)
     return -1;
 
+#if (HLW811X_CONFIG_SPI_READ_RETRY > 0)
+  do
+  {
+    // Read data
+    Handler->Platform.SPI.SetLevelSCSN(0);
+    Result = Handler->Platform.SPI.SendReceive(BufferTx, BufferRx, Size + 1);
+    Handler->Platform.SPI.SetLevelSCSN(1);
+
+    // Read RDATA register to check the read data
+    Handler->Platform.SPI.SetLevelSCSN(0);
+    Result = Handler->Platform.SPI.SendReceive(BufferCheckTX, BufferCheckRX, 5);
+    Handler->Platform.SPI.SetLevelSCSN(1);
+
+    // Compare the read data with the RDATA register
+    Result = 0;
+    for (uint8_t i = 1; i < Size + 1; i++)
+    {
+      if (BufferRx[i] != BufferCheckRX[i])
+      {
+        Result = -1;
+        break;
+      }
+    }
+  } while (Result < 0 && Retry++ < HLW811X_CONFIG_SPI_READ_RETRY);
+#else
   Handler->Platform.SPI.SetLevelSCSN(0);
   Result = Handler->Platform.SPI.SendReceive(BufferTx, BufferRx, Size + 1);
   Handler->Platform.SPI.SetLevelSCSN(1);
+#endif
 
   for (uint8_t i = 0; i < Size; i++)
     Data[i] = BufferRx[i + 1];
@@ -194,6 +263,9 @@ static int8_t
 HLW811x_WriteReg(HLW811x_Handler_t *Handler,
                  uint8_t Address, uint8_t Size, uint8_t *Data)
 {
+  if (Size == 0 || Size > 2 || !Data)
+    return -1;
+
 #if (HLW811X_CONFIG_SUPPORT_SPI && HLW811X_CONFIG_SUPPORT_UART)
   if (Handler->Platform.Communication == HLW811X_COMMUNICATION_SPI)
     return HLW811x_WriteRegSPI(Handler, Address, Size, Data);
@@ -205,7 +277,7 @@ HLW811x_WriteReg(HLW811x_Handler_t *Handler,
   return HLW811x_WriteRegUART(Handler, Address, Size, Data);
 #endif
 
-  return -1;
+  return -2;
 }
 
 static int8_t
@@ -220,37 +292,13 @@ HLW811x_WriteReg16(HLW811x_Handler_t *Handler,
   return HLW811x_WriteReg(Handler, Address, 2, Buffer);
 }
 
-// static int8_t
-// HLW811x_WriteReg24(HLW811x_Handler_t *Handler,
-//                    uint8_t Address, uint32_t Data)
-// {
-//   uint8_t Buffer[3] = {0};
-  
-//   Buffer[0] = (Data >> 16) & 0xFF;
-//   Buffer[1] = (Data >> 8) & 0xFF;
-//   Buffer[2] = Data & 0xFF;
-
-//   return HLW811x_WriteReg(Handler, Address, 3, Buffer);
-// }
-
-// static int8_t
-// HLW811x_WriteReg32(HLW811x_Handler_t *Handler,
-//                    uint8_t Address, uint32_t Data)
-// {
-//   uint8_t Buffer[4] = {0};
-  
-//   Buffer[0] = (Data >> 24) & 0xFF;
-//   Buffer[1] = (Data >> 16) & 0xFF;
-//   Buffer[2] = (Data >> 8) & 0xFF;
-//   Buffer[3] = Data & 0xFF;
-
-//   return HLW811x_WriteReg(Handler, Address, 4, Buffer);;
-// }
-
 static int8_t
 HLW811x_ReadReg(HLW811x_Handler_t *Handler,
                 uint8_t Address, uint8_t Size, uint8_t *Data)
 {
+  if (Size == 0 || Size > 4 || !Data)
+    return -1;
+
 #if (HLW811X_CONFIG_SUPPORT_SPI && HLW811X_CONFIG_SUPPORT_UART)
   if (Handler->Platform.Communication == HLW811X_COMMUNICATION_SPI)
     return HLW811x_ReadRegSPI(Handler, Address, Size, Data);
@@ -262,7 +310,7 @@ HLW811x_ReadReg(HLW811x_Handler_t *Handler,
   return HLW811x_ReadRegUART(Handler, Address, Size, Data);
 #endif
 
-  return -1;
+  return -2;
 }
 
 static int8_t

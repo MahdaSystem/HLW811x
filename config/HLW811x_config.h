@@ -38,8 +38,20 @@ extern "C" {
 
 
 /* Configurations ---------------------------------------------------------------*/
+/**
+ * @brief  Define the communication interface to use
+*/
 #define HLW811X_CONFIG_SUPPORT_SPI    1
 #define HLW811X_CONFIG_SUPPORT_UART   1
+
+
+/**
+ * @brief  Define the SPI read/write retry count based on RDATA and WDATA 
+ *         registers
+ * @note   Set it to 0 if you don't want to use retry mechanism
+*/
+#define HLW811X_CONFIG_SPI_READ_RETRY   3
+#define HLW811X_CONFIG_SPI_WRITE_RETRY  3
 
 
 
