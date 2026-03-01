@@ -632,6 +632,18 @@ HLW811x_SetPGA(HLW811x_Handler_t *Handler,
 
 
 /**
+ * @brief  Set comparator module
+ * @param  Handler: Pointer to handler
+ * @param  Enable: The comparator module is closed
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ *         - HLW811X_FAIL: Failed to send or receive data.
+ */
+HLW811x_Result_t
+HLW811x_SetCompModule(HLW811x_Handler_t *Handler, HLW811x_EnDis_t Enable);
+
+
+/**
  * @brief  Set the active power calculation method
  * @param  Handler: Pointer to handler
  * @param  Method: Active power calculation method
@@ -737,6 +749,20 @@ HLW811x_SetEnergyClearance(HLW811x_Handler_t *Handler,
 HLW811x_Result_t
 HLW811x_SetDataUpdateFreq(HLW811x_Handler_t *Handler,
                           HLW811x_DataUpdateFreq_t Freq);
+
+
+/**
+ * @brief  Set Current Channel B Measurement Selection Signal
+ * @param  Handler: Pointer to handler
+ * @param  Enable: Measure IB channel current
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ *         - HLW811X_FAIL: Failed to send or receive data.
+ *         - HLW811X_INVALID_PARAM: One of parameters is invalid.
+ */
+HLW811x_Result_t
+HLW811x_SetCHS_IB(HLW811x_Handler_t *Handler,
+                        HLW811x_EnDis_t Enable);
 
 
 /**
