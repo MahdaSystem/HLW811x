@@ -592,7 +592,7 @@ HLW811x_Begin(HLW811x_Handler_t *Handler)
 
   Handler->PGA.U = HLW811X_PGA_1;
   Handler->PGA.IA = HLW811X_PGA_16;
-  Handler->PGA.IB = HLW811X_PGA_1;
+  Handler->PGA.IB = HLW811X_PGA_16;
 
   Handler->CLKI = 3579545;
 
@@ -2071,8 +2071,8 @@ HLW811x_GetEnergyA(HLW811x_Handler_t *Handler, float *Data)
   int8_t Result = 0;
   uint32_t RawValue = 0;
   uint16_t CoefReg = 0;
-  float ResCoef = 0;
-  uint16_t PGA = 0;
+  double ResCoef = 0;
+  double PGA = 0;
   double DoubleBuffer = 0;
 
   Result = HLW811x_ReadReg24(Handler, HLW811X_REG_ADDR_Energy_PA, &RawValue);
@@ -2080,9 +2080,9 @@ HLW811x_GetEnergyA(HLW811x_Handler_t *Handler, float *Data)
     return HLW811X_FAIL;
 
   CoefReg = Handler->CoefReg.EnergyAC;
-  PGA = (1 << Handler->PGA.U) * (1 << Handler->PGA.IA);
+  PGA = 16 >> (Handler->PGA.U + Handler->PGA.IA);
   ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIA;
-  DoubleBuffer = (double)RawValue * (CoefReg / 536870912.0 / PGA / 4096 / ResCoef) * Handler->HFconst;
+  DoubleBuffer = (double)RawValue * (CoefReg / 536870912.0 / 4096 / ResCoef * PGA) * Handler->HFconst;
   *Data = (float)DoubleBuffer;
 
   return HLW811X_OK;
@@ -2103,8 +2103,8 @@ HLW811x_GetEnergyB(HLW811x_Handler_t *Handler, float *Data)
   int8_t Result = 0;
   uint32_t RawValue = 0;
   uint16_t CoefReg = 0;
-  float ResCoef = 0;
-  uint16_t PGA = 0;
+  double ResCoef = 0;
+  double PGA = 0;
   double DoubleBuffer = 0;
 
   Result = HLW811x_ReadReg24(Handler, HLW811X_REG_ADDR_Energy_PB, &RawValue);
@@ -2112,9 +2112,9 @@ HLW811x_GetEnergyB(HLW811x_Handler_t *Handler, float *Data)
     return HLW811X_FAIL;
 
   CoefReg = Handler->CoefReg.EnergyBC;
-  PGA = (1 << Handler->PGA.U) * (1 << Handler->PGA.IB);
+  PGA = 16 >> (Handler->PGA.U + Handler->PGA.IB);
   ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIB;
-  DoubleBuffer = (double)RawValue * (CoefReg / 536870912.0 / PGA / 4096 / ResCoef) * Handler->HFconst;
+  DoubleBuffer = (double)RawValue * (CoefReg / 536870912.0 / 4096 / ResCoef * PGA) * Handler->HFconst;
   *Data = (float)DoubleBuffer;
 
   return HLW811X_OK;

@@ -108,9 +108,9 @@ extern "C" {
 #define HLW811X_REG_ADDR_PowerSC        0x75 // Apparent power conversion coefficient
 #define HLW811X_REG_ADDR_EnergyAC       0x76 // Energy Conversion Coefficient of A Channel
 #define HLW811X_REG_ADDR_EnergyBC       0x77 // Energy Conversion Coefficient of B Channel
-#define HLW811X_REG_ADDR_Command        0xEA // Command Register
 #define HLW811X_REG_ADDR_TrimRC         0x7C // Built-in clock Trim register
 #define HLW811X_REG_ADDR_TrimVref       0x7D // Built-in VrefTrim register
+#define HLW811X_REG_ADDR_Command        0xEA // Command Register
 
 /**
  * @brief  Register bits of SYSCON register
