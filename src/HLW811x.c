@@ -1869,7 +1869,7 @@ HLW811x_GetPowerPA(HLW811x_Handler_t *Handler, float *Data)
 
   RawValue = *((int32_t*)&Reg);
   CoefReg = Handler->CoefReg.PowerPAC;
-  PGA = 16 >> (Handler->PGA.U + Handler->PGA.IA);
+  PGA =  (double)(16 >> Handler->PGA.IA) / (double)(1 << Handler->PGA.U);
   ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIA;
   DoubleBuffer = (double)RawValue * (CoefReg / 2147483648.0 / ResCoef * PGA);
   *Data = (float)DoubleBuffer;
@@ -1903,7 +1903,7 @@ HLW811x_GetPowerPB(HLW811x_Handler_t *Handler, float *Data)
 
   RawValue = *((int32_t*)&Reg);
   CoefReg = Handler->CoefReg.PowerPBC;
-  PGA = 16 >> (Handler->PGA.U + Handler->PGA.IB);
+  PGA =  (double)(16 >> Handler->PGA.IB) / (double)(1 << Handler->PGA.U);
   ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIB;
   DoubleBuffer = (double)RawValue * (CoefReg / 2147483648.0 / ResCoef * PGA);
   *Data = (float)DoubleBuffer;
@@ -1942,12 +1942,12 @@ HLW811x_GetPowerS(HLW811x_Handler_t *Handler, float *Data)
   {
   
   case HLW811X_CURRENT_CHANNEL_A:
-    PGA = 16 >> (Handler->PGA.U + Handler->PGA.IA);
+    PGA =  (double)(16 >> Handler->PGA.IA) / (double)(1 << Handler->PGA.U);
     ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIA;
     break;
 
   case HLW811X_CURRENT_CHANNEL_B: 
-    PGA = 16 >> (Handler->PGA.U + Handler->PGA.IB);
+    PGA =  (double)(16 >> Handler->PGA.IB) / (double)(1 << Handler->PGA.U);
     ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIB;
     break;
 
@@ -1986,9 +1986,9 @@ HLW811x_GetEnergyA(HLW811x_Handler_t *Handler, float *Data)
     return HLW811X_FAIL;
 
   CoefReg = Handler->CoefReg.EnergyAC;
-  PGA = (1 << Handler->PGA.U) * (1 << Handler->PGA.IA);
+  PGA =  (double)(16 >> Handler->PGA.IA) / (double)(1 << Handler->PGA.U);
   ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIA;
-  DoubleBuffer = (double)RawValue * (CoefReg / 536870912.0 / PGA / 4096 / ResCoef) * Handler->HFconst;
+  DoubleBuffer = (double)RawValue * (CoefReg / 536870912.0 / 4096 / ResCoef * PGA) * Handler->HFconst;
   *Data = (float)DoubleBuffer;
 
   return HLW811X_OK;
@@ -2018,9 +2018,9 @@ HLW811x_GetEnergyB(HLW811x_Handler_t *Handler, float *Data)
     return HLW811X_FAIL;
 
   CoefReg = Handler->CoefReg.EnergyBC;
-  PGA = (1 << Handler->PGA.U) * (1 << Handler->PGA.IB);
+  PGA =  (double)(16 >> Handler->PGA.IB) / (double)(1 << Handler->PGA.U);
   ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIB;
-  DoubleBuffer = (double)RawValue * (CoefReg / 536870912.0 / PGA / 4096 / ResCoef) * Handler->HFconst;
+  DoubleBuffer = (double)RawValue * (CoefReg / 536870912.0 / 4096 / ResCoef * PGA) * Handler->HFconst;
   *Data = (float)DoubleBuffer;
 
   return HLW811X_OK;
