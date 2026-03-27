@@ -1883,7 +1883,7 @@ HLW811x_GetRmsIB(HLW811x_Handler_t *Handler, float *Data)
   CoefReg = Handler->CoefReg.RmsIBC;
   ResCoef = Handler->ResCoef.KIB;
   PGA = 16 >> Handler->PGA.IB;
-  DoubleBuffer = (double)RawValue * (CoefReg / 8388608.0 / ResCoef / 10000 * PGA);
+  DoubleBuffer = (double)RawValue * (CoefReg / 8388608.0 / ResCoef / 1000 * PGA);
   *Data = (float)DoubleBuffer;
 
   return HLW811X_OK;
