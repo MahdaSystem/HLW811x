@@ -94,6 +94,17 @@ typedef enum HLW811x_CurrentChannel_e
   HLW811X_CURRENT_CHANNEL_B = 1
 } HLW811x_CurrentChannel_t;
 
+
+/**
+ * @brief  Channel B Measurement
+ */
+typedef enum HLW811x_ChannelBMeasurement_e
+{
+  HLW811X_CHANNEL_B_MEASUREMENT_TEMPERATURE = 0,
+  HLW811X_CHANNEL_B_MEASUREMENT_IB = 1
+} HLW811x_ChannelBMeasurement_t;
+
+
 /**
  * @brief  PGA gain
  */
@@ -614,6 +625,18 @@ HLW811x_SetSpecialMeasurementChannel(HLW811x_Handler_t *Handler,
 HLW811x_Result_t
 HLW811x_SetChannelOnOff(HLW811x_Handler_t *Handler,
                         HLW811x_EnDis_t U, HLW811x_EnDis_t IA, HLW811x_EnDis_t IB);
+
+
+/**
+ * @brief  Set Measurement type of channel B
+ * @param  Handler: Pointer to handler
+ * @param  Measurement: Measurement type
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ *         - HLW811X_FAIL: Failed to send or receive data.
+ */                  
+HLW811x_Result_t
+HLW811x_ChannelBMeasurement(HLW811x_Handler_t *Handler, HLW811x_ChannelBMeasurement_t Measurement);
 
 
 /**

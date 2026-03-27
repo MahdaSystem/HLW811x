@@ -824,6 +824,52 @@ HLW811x_SetChannelOnOff(HLW811x_Handler_t *Handler,
   return HLW811X_OK;
 }
 
+/**
+ * @brief  Set Measurement type of channel B
+ * @param  Handler: Pointer to handler
+ * @param  Measurement: Measurement type
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ *         - HLW811X_FAIL: Failed to send or receive data.
+ */                  
+HLW811x_Result_t
+HLW811x_ChannelBMeasurement(HLW811x_Handler_t *Handler, HLW811x_ChannelBMeasurement_t Measurement)
+{
+  int8_t Result = 0;
+  uint16_t Reg = 0;
+
+  Result = HLW811x_ReadReg16(Handler, HLW811X_REG_ADDR_EMUCON2, &Reg);
+  if (Result < 0)
+    return HLW811X_FAIL;
+
+  switch (Measurement)
+  {
+  case HLW811X_CHANNEL_B_MEASUREMENT_TEMPERATURE:
+    Reg &= ~(1 << HLW811X_REG_EMUCON2_CHS_IB);
+    break;
+  
+  case HLW811X_CHANNEL_B_MEASUREMENT_IB:
+    Reg |= (1 << HLW811X_REG_EMUCON2_CHS_IB);
+    break;
+  
+  default:
+    break;
+  }
+
+  Result = HLW811x_CommandEnableWriteOperation(Handler);
+  if (Result < 0)
+    return HLW811X_FAIL;
+
+  Result = HLW811x_WriteReg16(Handler, HLW811X_REG_ADDR_EMUCON2, Reg);
+  if (Result < 0)
+    return HLW811X_FAIL;
+
+  Result = HLW811x_CommandCloseWriteOperation(Handler);
+  if (Result < 0)
+    return HLW811X_FAIL;
+
+  return HLW811X_OK;
+}
 
 /**
  * @brief  Set the PGA gain
