@@ -2023,8 +2023,8 @@ HLW811x_GetEnergyA(HLW811x_Handler_t *Handler, float *Data)
   int8_t Result = 0;
   uint32_t RawValue = 0;
   uint16_t CoefReg = 0;
-  float ResCoef = 0;
-  uint16_t PGA = 0;
+  double ResCoef = 0;
+  double PGA = 0;
   double DoubleBuffer = 0;
 
   Result = HLW811x_ReadReg24(Handler, HLW811X_REG_ADDR_Energy_PA, &RawValue);
@@ -2055,8 +2055,8 @@ HLW811x_GetEnergyB(HLW811x_Handler_t *Handler, float *Data)
   int8_t Result = 0;
   uint32_t RawValue = 0;
   uint16_t CoefReg = 0;
-  float ResCoef = 0;
-  uint16_t PGA = 0;
+  double ResCoef = 0;
+  double PGA = 0;
   double DoubleBuffer = 0;
 
   Result = HLW811x_ReadReg24(Handler, HLW811X_REG_ADDR_Energy_PB, &RawValue);
