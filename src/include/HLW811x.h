@@ -775,20 +775,6 @@ HLW811x_SetDataUpdateFreq(HLW811x_Handler_t *Handler,
 
 
 /**
- * @brief  Set Current Channel B Measurement Selection Signal
- * @param  Handler: Pointer to handler
- * @param  Enable: Measure IB channel current
- * @retval HLW811x_Result_t
- *         - HLW811X_OK: Operation was successful.
- *         - HLW811X_FAIL: Failed to send or receive data.
- *         - HLW811X_INVALID_PARAM: One of parameters is invalid.
- */
-HLW811x_Result_t
-HLW811x_SetCHS_IB(HLW811x_Handler_t *Handler,
-                        HLW811x_EnDis_t Enable);
-
-
-/**
  * @brief  Set the power factor functionality
  * @param  Handler: Pointer to handler
  * @param  Enable: Enable/Disable power factor functionality

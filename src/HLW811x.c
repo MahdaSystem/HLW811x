@@ -1397,57 +1397,6 @@ HLW811x_SetDataUpdateFreq(HLW811x_Handler_t *Handler,
 
 
 /**
- * @brief  Set Current Channel B Measurement Selection Signal
- * @param  Handler: Pointer to handler
- * @param  Enable: Measure IB channel current
- * @retval HLW811x_Result_t
- *         - HLW811X_OK: Operation was successful.
- *         - HLW811X_FAIL: Failed to send or receive data.
- *         - HLW811X_INVALID_PARAM: One of parameters is invalid.
- */
-HLW811x_Result_t
-HLW811x_SetCHS_IB(HLW811x_Handler_t *Handler,
-                        HLW811x_EnDis_t Enable)
-{
-  int8_t Result = 0;
-  uint16_t Reg = 0;
-
-  Result = HLW811x_ReadReg16(Handler, HLW811X_REG_ADDR_EMUCON2, &Reg);
-  if (Result < 0)
-    return HLW811X_FAIL;
-
-  switch (Enable)
-  {
-  case HLW811X_ENDIS_ENABLE:
-    Reg |= (1 << HLW811X_REG_EMUCON2_CHS_IB);
-    break;
-
-  case HLW811X_ENDIS_DISABLE:
-    Reg &= ~(1 << HLW811X_REG_EMUCON2_CHS_IB);
-    break;
-
-  default:
-    return HLW811X_INVALID_PARAM;
-    break;
-  }
-
-  Result = HLW811x_CommandEnableWriteOperation(Handler);
-  if (Result < 0)
-    return HLW811X_FAIL;
-
-  Result = HLW811x_WriteReg16(Handler, HLW811X_REG_ADDR_EMUCON2, Reg);
-  if (Result < 0)
-    return HLW811X_FAIL;
-
-  Result = HLW811x_CommandCloseWriteOperation(Handler);
-  if (Result < 0)
-    return HLW811X_FAIL;
-
-  return HLW811X_OK;
-}
-
-
-/**
  * @brief  Set the power factor functionality
  * @param  Handler: Pointer to handler
  * @param  Enable: Enable/Disable power factor functionality
