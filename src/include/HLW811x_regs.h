@@ -108,6 +108,8 @@ extern "C" {
 #define HLW811X_REG_ADDR_PowerSC        0x75 // Apparent power conversion coefficient
 #define HLW811X_REG_ADDR_EnergyAC       0x76 // Energy Conversion Coefficient of A Channel
 #define HLW811X_REG_ADDR_EnergyBC       0x77 // Energy Conversion Coefficient of B Channel
+#define HLW811X_REG_ADDR_TrimRC         0x7C // Built-in clock Trim register
+#define HLW811X_REG_ADDR_TrimVref       0x7D // Built-in VrefTrim register
 #define HLW811X_REG_ADDR_Command        0xEA // Command Register
 
 /**
@@ -139,9 +141,10 @@ extern "C" {
 /**
  * @brief  Register bits of EMUCON2 register
  */
+#define HLW811X_REG_EMUCON2_DOTPSEL       15
 #define HLW811X_REG_EMUCON2_SDOCmos       12
 #define HLW811X_REG_EMUCON2_EPB_CB        11
-#define HLW811X_REG_EMUCON2_EPB_CA        10
+#define HLW811X_REG_EMUCON2_EPA_CA        10
 #define HLW811X_REG_EMUCON2_DUPSEL        8
 #define HLW811X_REG_EMUCON2_CHS_IB        7
 #define HLW811X_REG_EMUCON2_PfactorEN     6

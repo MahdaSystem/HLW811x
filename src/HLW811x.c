@@ -592,7 +592,7 @@ HLW811x_Begin(HLW811x_Handler_t *Handler)
 
   Handler->PGA.U = HLW811X_PGA_1;
   Handler->PGA.IA = HLW811X_PGA_16;
-  Handler->PGA.IB = HLW811X_PGA_1;
+  Handler->PGA.IB = HLW811X_PGA_16;
 
   Handler->CLKI = 3579545;
 
@@ -875,6 +875,49 @@ HLW811x_SetPGA(HLW811x_Handler_t *Handler,
   Handler->PGA.U = U;
   Handler->PGA.IA = IA;
   Handler->PGA.IB = IB;
+
+  Result = HLW811x_CommandCloseWriteOperation(Handler);
+  if (Result < 0)
+    return HLW811X_FAIL;
+
+  return HLW811X_OK;
+}
+
+
+/**
+ * @brief  Set comparator module
+ * @param  Handler: Pointer to handler
+ * @param  Enable: The comparator module is closed
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ *         - HLW811X_FAIL: Failed to send or receive data.
+ */
+HLW811x_Result_t
+HLW811x_SetCompModule(HLW811x_Handler_t *Handler, HLW811x_EnDis_t Enable)
+{
+  int8_t Result = 0;
+  uint16_t Reg = 0;
+
+  Result = HLW811x_ReadReg16(Handler, HLW811X_REG_ADDR_EMUCON, &Reg);
+  if (Result < 0)
+    return HLW811X_FAIL;
+
+  if (Enable == HLW811X_ENDIS_ENABLE)
+  {
+    Reg &= ~(1 << HLW811X_REG_EMUCON_comp_off);
+  }
+  else if (Enable == HLW811X_ENDIS_DISABLE)
+  {
+    Reg |= (1 << HLW811X_REG_EMUCON_comp_off);
+  }
+
+  Result = HLW811x_CommandEnableWriteOperation(Handler);
+  if (Result < 0)
+    return HLW811X_FAIL;
+
+  Result = HLW811x_WriteReg16(Handler, HLW811X_REG_ADDR_EMUCON, Reg);
+  if (Result < 0)
+    return HLW811X_FAIL;
 
   Result = HLW811x_CommandCloseWriteOperation(Handler);
   if (Result < 0)
@@ -1212,11 +1255,11 @@ HLW811x_SetEnergyClearance(HLW811x_Handler_t *Handler,
 
   if (PA == HLW811X_ENDIS_ENABLE)
   {
-    Reg &= ~(1 << HLW811X_REG_EMUCON2_EPB_CA);
+    Reg &= ~(1 << HLW811X_REG_EMUCON2_EPA_CA);
   }
   else if (PA == HLW811X_ENDIS_DISABLE)
   {
-    Reg |= (1 << HLW811X_REG_EMUCON2_EPB_CA);
+    Reg |= (1 << HLW811X_REG_EMUCON2_EPA_CA);
   }
 
   if (PB == HLW811X_ENDIS_ENABLE)
@@ -1291,6 +1334,57 @@ HLW811x_SetDataUpdateFreq(HLW811x_Handler_t *Handler,
   Reg &= ~(3 << HLW811X_REG_EMUCON2_DUPSEL);
   Reg |= Mask;
   
+  Result = HLW811x_CommandEnableWriteOperation(Handler);
+  if (Result < 0)
+    return HLW811X_FAIL;
+
+  Result = HLW811x_WriteReg16(Handler, HLW811X_REG_ADDR_EMUCON2, Reg);
+  if (Result < 0)
+    return HLW811X_FAIL;
+
+  Result = HLW811x_CommandCloseWriteOperation(Handler);
+  if (Result < 0)
+    return HLW811X_FAIL;
+
+  return HLW811X_OK;
+}
+
+
+/**
+ * @brief  Set Current Channel B Measurement Selection Signal
+ * @param  Handler: Pointer to handler
+ * @param  Enable: Measure IB channel current
+ * @retval HLW811x_Result_t
+ *         - HLW811X_OK: Operation was successful.
+ *         - HLW811X_FAIL: Failed to send or receive data.
+ *         - HLW811X_INVALID_PARAM: One of parameters is invalid.
+ */
+HLW811x_Result_t
+HLW811x_SetCHS_IB(HLW811x_Handler_t *Handler,
+                        HLW811x_EnDis_t Enable)
+{
+  int8_t Result = 0;
+  uint16_t Reg = 0;
+
+  Result = HLW811x_ReadReg16(Handler, HLW811X_REG_ADDR_EMUCON2, &Reg);
+  if (Result < 0)
+    return HLW811X_FAIL;
+
+  switch (Enable)
+  {
+  case HLW811X_ENDIS_ENABLE:
+    Reg |= (1 << HLW811X_REG_EMUCON2_CHS_IB);
+    break;
+
+  case HLW811X_ENDIS_DISABLE:
+    Reg &= ~(1 << HLW811X_REG_EMUCON2_CHS_IB);
+    break;
+
+  default:
+    return HLW811X_INVALID_PARAM;
+    break;
+  }
+
   Result = HLW811x_CommandEnableWriteOperation(Handler);
   if (Result < 0)
     return HLW811X_FAIL;
@@ -1837,7 +1931,7 @@ HLW811x_GetRmsIB(HLW811x_Handler_t *Handler, float *Data)
   CoefReg = Handler->CoefReg.RmsIBC;
   ResCoef = Handler->ResCoef.KIB;
   PGA = 16 >> Handler->PGA.IB;
-  DoubleBuffer = (double)RawValue * (CoefReg / 8388608.0 / ResCoef / 10000 * PGA);
+  DoubleBuffer = (double)RawValue * (CoefReg / 8388608.0 / ResCoef / 1000 * PGA);
   *Data = (float)DoubleBuffer;
 
   return HLW811X_OK;
@@ -1977,8 +2071,8 @@ HLW811x_GetEnergyA(HLW811x_Handler_t *Handler, float *Data)
   int8_t Result = 0;
   uint32_t RawValue = 0;
   uint16_t CoefReg = 0;
-  float ResCoef = 0;
-  uint16_t PGA = 0;
+  double ResCoef = 0;
+  double PGA = 0;
   double DoubleBuffer = 0;
 
   Result = HLW811x_ReadReg24(Handler, HLW811X_REG_ADDR_Energy_PA, &RawValue);
@@ -1986,9 +2080,9 @@ HLW811x_GetEnergyA(HLW811x_Handler_t *Handler, float *Data)
     return HLW811X_FAIL;
 
   CoefReg = Handler->CoefReg.EnergyAC;
-  PGA = (1 << Handler->PGA.U) * (1 << Handler->PGA.IA);
+  PGA = 16 >> (Handler->PGA.U + Handler->PGA.IA);
   ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIA;
-  DoubleBuffer = (double)RawValue * (CoefReg / 536870912.0 / PGA / 4096 / ResCoef) * Handler->HFconst;
+  DoubleBuffer = (double)RawValue * (CoefReg / 536870912.0 / 4096 / ResCoef * PGA) * Handler->HFconst;
   *Data = (float)DoubleBuffer;
 
   return HLW811X_OK;
@@ -2009,8 +2103,8 @@ HLW811x_GetEnergyB(HLW811x_Handler_t *Handler, float *Data)
   int8_t Result = 0;
   uint32_t RawValue = 0;
   uint16_t CoefReg = 0;
-  float ResCoef = 0;
-  uint16_t PGA = 0;
+  double ResCoef = 0;
+  double PGA = 0;
   double DoubleBuffer = 0;
 
   Result = HLW811x_ReadReg24(Handler, HLW811X_REG_ADDR_Energy_PB, &RawValue);
@@ -2018,9 +2112,9 @@ HLW811x_GetEnergyB(HLW811x_Handler_t *Handler, float *Data)
     return HLW811X_FAIL;
 
   CoefReg = Handler->CoefReg.EnergyBC;
-  PGA = (1 << Handler->PGA.U) * (1 << Handler->PGA.IB);
+  PGA = 16 >> (Handler->PGA.U + Handler->PGA.IB);
   ResCoef = Handler->ResCoef.KU * Handler->ResCoef.KIB;
-  DoubleBuffer = (double)RawValue * (CoefReg / 536870912.0 / PGA / 4096 / ResCoef) * Handler->HFconst;
+  DoubleBuffer = (double)RawValue * (CoefReg / 536870912.0 / 4096 / ResCoef * PGA) * Handler->HFconst;
   *Data = (float)DoubleBuffer;
 
   return HLW811X_OK;
